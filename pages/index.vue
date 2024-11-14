@@ -20,63 +20,81 @@
       />
     </div>
 
-    <!-- Display search results using the Card component -->
-    <div v-if="heritageItems.length > 0" class="grid gap-4">
-      <Card
-        v-for="item in heritageItems"
+    <div
+      v-if="heritageItems.length > 0"
+      class="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-3 mx-auto px-4 sm:px-6 lg:px-8"
+    >
+      <div
         :key="item.id"
-        class="w-full max-w-2xl mx-auto"
+        class="mb-3 break-inside-avoid overflow-hidden"
+        v-for="item in heritageItems"
       >
-        <CardHeader>
-          <CardTitle>
-            {{ item.name }}
-            <span v-if="item.name_hanja">({{ item.name_hanja }})</span>
-          </CardTitle>
-          <CardDescription v-if="item.longitude && item.latitude">
-            <div class="flex flex-col">
-              <span>경도: {{ item.longitude }}</span>
-              <span>위도: {{ item.latitude }}</span>
-            </div>
-          </CardDescription>
-        </CardHeader>
+        <div class="relative overflow-hidden rounded-lg">
+          <!-- Image container with clamped aspect ratio -->
+          <div class="relative-container relative w-full">
+            <!-- Image filling the container with object-cover to prevent blank space -->
+            <img
+              v-if="item.thumbnail"
+              :src="item.thumbnail"
+              class="w-full h-full object-cover opacity-75"
+              alt="Heritage Item Thumbnail"
+            />
+          </div>
 
-        <CardContent class="space-y-2">
-          <p v-if="item.location_description">
-            <strong>주소:</strong> {{ item.location_description }}
-          </p>
-          <p v-if="item.era"><strong>시대:</strong> {{ item.era }}</p>
-          <p v-if="item.owner"><strong>소유자:</strong> {{ item.owner }}</p>
-          <p v-if="item.manager"><strong>관리자:</strong> {{ item.manager }}</p>
-          <p v-if="item.type"><strong>유형:</strong> {{ item.type }}</p>
-          <p v-if="item.quantity"><strong>수량:</strong> {{ item.quantity }}</p>
-          <p v-if="item.registered_date">
-            <strong>등록일:</strong> {{ formatDate(item.registered_date) }}
-          </p>
-          <p v-if="item.management_number">
-            <strong>관리 번호:</strong> {{ item.management_number }}
-          </p>
-          <p v-if="item.linkage_number">
-            <strong>연계 번호:</strong> {{ item.linkage_number }}
-          </p>
-          <!-- <p><strong>내용:</strong> {{ item.content }}</p> -->
-        </CardContent>
+          <!-- Dark overlay for better text visibility -->
+          <div class="absolute inset-0 bg-zinc-950/30"></div>
 
-        <CardContent v-if="item.thumbnail" class="mt-4">
-          <AspectRatio :ratio="16 / 9">
-            <div class="relative w-full h-full">
-              <img
-                :src="item.thumbnail"
-                alt="Thumbnail"
-                class="rounded-md object-cover w-full h-full"
-                loading="lazy"
-              />
-              <Skeleton
-                class="absolute inset-0 rounded-md object-cover w-full h-full"
-              />
-            </div>
-          </AspectRatio>
-        </CardContent>
-      </Card>
+          <!-- Card content -->
+          <div class="absolute bottom-4 left-4 z-10 text-white">
+            <p>{{ item.era }}</p>
+            <h3 class="text-xl font-semibold break-keep">
+              <span v-if="item.name_hanja">{{ item.name }}</span>
+            </h3>
+          </div>
+
+          <!-- Hanja name overlay -->
+          <div class="absolute top-4 right-4 z-10">
+            <p
+              class="pointer-events-none select-none break-keep text-2xl font-extrabold text-right text-white/30"
+            >
+              <span v-if="item.name_hanja">{{ item.name_hanja }}</span>
+            </p>
+          </div>
+        </div>
+        <Breadcrumb class="mt-1">
+          <BreadcrumbList>
+            <BreadcrumbItem v-if="item.categories1">
+              <BreadcrumbLink href="#">
+                {{ item.categories1.name }}
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+
+            <BreadcrumbSeparator v-if="item.categories2" />
+
+            <BreadcrumbItem v-if="item.categories2">
+              <BreadcrumbLink href="#">
+                {{ item.categories2.name }}
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+
+            <BreadcrumbSeparator v-if="item.categories3" />
+
+            <BreadcrumbItem v-if="item.categories3">
+              <BreadcrumbLink href="#">
+                {{ item.categories3.name }}
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+
+            <BreadcrumbSeparator v-if="item.categories4" />
+
+            <BreadcrumbItem v-if="item.categories4">
+              <BreadcrumbLink href="#">
+                {{ item.categories4.name }}
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </div>
     </div>
 
     <!-- Display a message if no results are found -->
@@ -150,7 +168,11 @@ const searchHeritageItems = async () => {
       linkage_number,
       thumbnail,
       images (id, image_url, description),
-      videos (id, video_url)
+      videos (id, video_url),
+      categories1:category1_id (id, name),
+      categories2:category2_id (id, name),
+      categories3:category3_id (id, name),
+      categories4:category4_id (id, name)
     `
     )
     .ilike("name", `%${searchPhrase.value}%`);
@@ -170,3 +192,12 @@ const searchHeritageItems = async () => {
   heritageItems.value = data || [];
 };
 </script>
+
+<style scoped>
+.relative-container {
+  position: relative;
+  width: 100%;
+  min-height: calc(var(--container-width) * 0.3);
+  max-height: calc(var(--container-width) * 2);
+}
+</style>
