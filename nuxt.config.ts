@@ -1,7 +1,12 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   devtools: { enabled: true },
-  modules: ["@nuxtjs/supabase"],
+  modules: [
+    "@nuxtjs/supabase",
+    "shadcn-nuxt",
+    "@nuxtjs/tailwindcss",
+    "@nuxtjs/color-mode",
+  ],
 
   supabase: {
     redirectOptions: {
@@ -10,6 +15,18 @@ export default defineNuxtConfig({
       include: undefined,
       exclude: ["/*"],
     },
+  },
+
+  shadcn: {
+    /**
+     * Prefix for all the imported component
+     */
+    prefix: "",
+    /**
+     * Directory that the component lives in.
+     * @default "./components/ui"
+     */
+    componentDir: "./components/ui",
   },
 
   compatibilityDate: "2024-04-03",
