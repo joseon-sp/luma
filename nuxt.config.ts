@@ -6,6 +6,7 @@ export default defineNuxtConfig({
     "shadcn-nuxt",
     "@nuxtjs/tailwindcss",
     "@nuxtjs/color-mode",
+    "@nuxt/image",
   ],
 
   supabase: {
