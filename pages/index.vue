@@ -1,3 +1,4 @@
+ear
 <template>
   <div class="fixed top-0 left-0 p-2 text-sm z-50">
     <p>
@@ -13,8 +14,7 @@
     >
       <h2 class="h2">Luma Search demo</h2>
       <Input
-        v-model="searchPhrase"
-        @input="debouncedSearch"
+        @input="onInput"
         type="text"
         placeholder="검색하기"
         class="max-w-2xl"
@@ -36,9 +36,9 @@
             <!-- Image filling the container with object-cover to prevent blank space -->
             <NuxtImg
               v-if="item.thumbnail"
-              :src="item.thumbnail.url"
-              :width="item.thumbnail.width"
-              :height="item.thumbnail.height"
+              :src="item.thumbnail.optimized_url"
+              :width="item.thumbnail.optimized_width"
+              :height="item.thumbnail.optimized_height"
               class="w-full h-full object-cover opacity-75 min-h-56"
               alt="Heritage Item Thumbnail"
             />
@@ -208,7 +208,7 @@ const searchHeritageItems = async () => {
       name,
       name_hanja,
       era,
-      thumbnail:thumbnail (url, width, height),
+      thumbnail:thumbnail (optimized_url, optimized_width, optimized_height),
       categories1:category1_id (id, name),
       categories2:category2_id (id, name),
       categories3:category3_id (id, name),
@@ -277,7 +277,11 @@ interface HeritageItem {
   name: string;
   name_hanja?: string;
   era: string;
-  thumbnail?: { url: string; width: number; height: number };
+  thumbnail?: {
+    optimized_url: string;
+    optimized_width: number;
+    optimized_height: number;
+  };
   categories1?: { id: number; name: string };
   categories2?: { id: number; name: string };
   categories3?: { id: number; name: string };
