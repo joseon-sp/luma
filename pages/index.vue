@@ -1,264 +1,210 @@
-ear
 <template>
+  <!-- Top Bar with Color Mode and Stats -->
   <div class="fixed top-0 left-0 p-2 text-sm z-50">
+    <UColorModeButton />
     <p>
-      <strong>평균 검색 시간:</strong>
-      {{ averageSearchTime }} ms<br />
+      <strong>평균 검색 시간:</strong> {{ averageSearchTime }} ms<br />
       <strong>총 검색 요청 수:</strong> {{ totalSearches }}
     </p>
   </div>
 
-  <div class="container">
-    <div
-      class="sticky top-0 flex flex-col items-center mt-[30vh] mb-10 pb-2 bg-background z-50"
-    >
-      <h2 class="h2">Luma Search demo</h2>
-      <Input
-        @input="onInput"
-        type="text"
-        placeholder="검색하기"
-        class="max-w-2xl"
-      />
-    </div>
+  <!-- Search Section -->
+  <div
+    class="sticky top-0 flex flex-col items-center mt-[30vh] mb-10 pb-2 bg-background z-50"
+  >
+    <h2 class="h2">Luma Search demo</h2>
+    <UInput
+      @input="search"
+      type="text"
+      placeholder="검색하기"
+      class="max-w-2xl"
+    />
+  </div>
 
-    <div
-      v-if="Array.isArray(heritageItems) && heritageItems.length > 0"
-      class="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-3 mx-auto px-4 sm:px-6 lg:px-8"
-    >
+  <!-- Heritage Items or Skeletons -->
+  <div class="flex flex-col items-center w-full">
+    <!-- Heritage Items -->
+    <div v-if="heritageItems.length" class="w-full">
       <div
-        :key="item.id"
-        class="mb-3 break-inside-avoid overflow-hidden"
-        v-for="item in heritageItems"
+        v-for="(batch, batchIndex) in heritageItems"
+        :key="'batch-' + batchIndex"
+        class="w-full"
       >
-        <div class="relative overflow-hidden rounded-lg">
-          <!-- Image container with clamped aspect ratio -->
-          <div class="relative-container relative w-full">
-            <!-- Image filling the container with object-cover to prevent blank space -->
-            <NuxtImg
-              v-if="item.thumbnail"
-              :src="item.thumbnail.optimized_url"
-              :width="item.thumbnail.optimized_width"
-              :height="item.thumbnail.optimized_height"
-              class="w-full h-full object-cover opacity-75 min-h-56"
-              alt="Heritage Item Thumbnail"
-            />
-            <div
-              v-else
-              class="w-full h-52 object-cover bg-zinc-900 text-white text-lg font-bold flex items-center justify-center"
-            >
-              <p>이미지 없음</p>
-            </div>
-          </div>
+        <!-- Divider Between Batches -->
+        <UDivider
+          v-if="batchIndex"
+          :label="`${batchIndex + 1} / ${totalPages}`"
+          class="my-6"
+        />
 
-          <!-- Dark overlay for better text visibility -->
-          <div class="absolute inset-0 bg-zinc-950/30"></div>
-
-          <!-- Card content -->
-          <div class="absolute bottom-4 left-4 z-10 text-white">
-            <p>{{ item.era }}</p>
-            <h3 class="text-xl font-semibold break-keep">
-              <span v-if="item.name">{{ item.name }}</span>
-            </h3>
-          </div>
-
-          <!-- Hanja name overlay -->
-          <div class="absolute top-4 right-4 z-10">
-            <p
-              class="pointer-events-none select-none break-keep text-2xl font-extrabold text-right text-white/30"
-            >
-              <span v-if="item.name_hanja">{{ item.name_hanja }}</span>
-            </p>
-          </div>
+        <!-- Masonry Layout -->
+        <div
+          class="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-3 px-4 sm:px-6 lg:px-8 max-w-[380px] sm:max-w-none mx-auto"
+        >
+          <HeritageCard v-for="item in batch" :key="item.id" :item="item" />
         </div>
-        <Breadcrumb class="mt-1">
-          <BreadcrumbList>
-            <BreadcrumbItem v-if="item.categories1">
-              <BreadcrumbLink href="#">
-                {{ item.categories1.name }}
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-
-            <BreadcrumbSeparator v-if="item.categories2" />
-
-            <BreadcrumbItem v-if="item.categories2">
-              <BreadcrumbLink href="#">
-                {{ item.categories2.name }}
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-
-            <BreadcrumbSeparator v-if="item.categories3" />
-
-            <BreadcrumbItem v-if="item.categories3">
-              <BreadcrumbLink href="#">
-                {{ item.categories3.name }}
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-
-            <BreadcrumbSeparator v-if="item.categories4" />
-
-            <BreadcrumbItem v-if="item.categories4">
-              <BreadcrumbLink href="#">
-                {{ item.categories4.name }}
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
       </div>
     </div>
 
-    <!-- Loading Indicator -->
-    <div v-if="isLoading" class="text-center my-4">Loading...</div>
+    <!-- Skeletons for Loading State -->
+    <div v-if="isLoading" class="w-full">
+      <div
+        class="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-3 px-4 sm:px-6 lg:px-8 max-w-[380px] sm:max-w-none mx-auto"
+      >
+        <SkeletonCard v-for="n in 10" />
+      </div>
+    </div>
 
     <!-- End of Page Message -->
-    <div
-      v-if="
-        !hasMore && Array.isArray(heritageItems) && heritageItems.length > 0
-      "
-      class="text-center my-4"
-    >
+    <div v-if="!hasMore && heritageItems.length" class="text-center my-4">
       <p>You've reached the end of the results.</p>
     </div>
 
-    <!-- Display a message if no results are found -->
-    <p
-      v-else-if="
-        !isLoading && Array.isArray(heritageItems) && heritageItems.length === 0
-      "
-      class="text-center"
-    >
+    <!-- No Results Found Message -->
+    <p v-else-if="!isLoading && !heritageItems.length" class="text-center">
       No results found
     </p>
-
-    <!-- Debugging: Display the type and length of heritageItems -->
-    <!-- <p class="text-red-500 text-center">
-      Type of heritageItems: {{ typeof heritageItems }} | Length: {{ heritageItems.length }}
-    </p> -->
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
-import debounce from "lodash/debounce"; // Ensure lodash is installed
-
-// Initialize Supabase client
 const supabase = useSupabaseClient();
 
-// Reactive state
 const searchPhrase = ref("");
-const heritageItems = ref<HeritageItem[]>([]);
+const heritageItems = ref<HeritageItem[][]>([]); // Array of batches with descriptions
 const currentPage = ref(1);
-const pageSize = 20; // Number of items per page
+const pageSize = 20;
 const hasMore = ref(true);
 const isLoading = ref(false);
 
-// Statistics
 const totalSearches = ref(0);
 const totalSearchTime = ref(0);
+const totalCount = ref<number | null>(null); // Store total item count
 
-// Computed property for average search time
+// Compute total pages
+const totalPages = computed(() => {
+  if (totalCount.value !== null) {
+    return Math.ceil(totalCount.value / pageSize);
+  }
+  return 1;
+});
+
 const averageSearchTime = computed(() => {
   return totalSearches.value === 0
     ? "0.00"
     : (totalSearchTime.value / totalSearches.value / 10).toFixed(2);
 });
 
-// Debounced search function to prevent excessive API calls
-const debouncedSearch = debounce(() => {
+// Async function to fetch description
+const getHeritageItemDescription = async (item: HeritageItem) => {
+  try {
+    const { data, error } = await supabase
+      .from("heritage_items")
+      .select("content")
+      .eq("id", item.id)
+      .single();
+
+    if (error) {
+      console.error("Description fetch error:", error.message);
+      return "설명 없음";
+    }
+
+    return data?.content || "설명 없음";
+  } catch (err) {
+    console.error("Unexpected error:", err);
+    return "설명 없음";
+  }
+};
+
+// Search function triggered by input
+const search = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const value = target?.value || ""; // Safely access the input value
+  if (searchPhrase.value === value.trim()) return; // Prevent unnecessary searches
+  searchPhrase.value = value.trim();
+  heritageItems.value = []; // Reset heritageItems
   currentPage.value = 1;
-  heritageItems.value = [];
   hasMore.value = true;
-  searchHeritageItems();
-}, 300);
-
-// Function to handle input event (if still needed)
-const onInput = (event: Event) => {
-  searchPhrase.value = (event.target as HTMLInputElement).value;
-  debouncedSearch();
-};
-
-// Function to format dates
-const formatDate = (date: string) => {
-  const options: Intl.DateTimeFormatOptions = {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  };
-  return new Date(date).toLocaleDateString("ko-KR", options);
-};
-
-// Function to search for heritage items with pagination
-const searchHeritageItems = async () => {
-  if (searchPhrase.value.trim() === "") {
-    heritageItems.value = []; // Clear results if search is empty
+  totalCount.value = null; // Reset totalCount
+  if (searchPhrase.value === "") {
     hasMore.value = false;
     return;
   }
-
-  if (!hasMore.value) return; // No more data to fetch
-
-  isLoading.value = true;
-  const startTime = performance.now(); // Start timing
-
-  // Fetch matching heritage items from Supabase using ilike (case-insensitive search)
-  const { data, error, count } = await supabase
-    .from("heritage_items")
-    .select(
-      `
-      id,
-      name,
-      name_hanja,
-      era,
-      thumbnail:thumbnail (optimized_url, optimized_width, optimized_height),
-      categories1:category1_id (id, name),
-      categories2:category2_id (id, name),
-      categories3:category3_id (id, name),
-      categories4:category4_id (id, name)
-    `,
-      { count: "exact" }
-    )
-    .ilike("name", `%${searchPhrase.value}%`)
-    .order("id", { ascending: true })
-    .range(
-      (currentPage.value - 1) * pageSize,
-      currentPage.value * pageSize - 1
-    );
-
-  const endTime = performance.now(); // End timing
-  const searchDuration = endTime - startTime;
-
-  // Update statistics
-  totalSearches.value += 1;
-  totalSearchTime.value += searchDuration;
-
-  if (error) {
-    console.error("Error fetching data:", error);
-    isLoading.value = false;
-    return;
-  }
-
-  if (data) {
-    heritageItems.value = heritageItems.value.concat(data);
-    console.log("heritageItems after concat:", heritageItems.value);
-    // Determine if more data is available
-    if (count !== null) {
-      hasMore.value = heritageItems.value.length < count;
-    } else {
-      // If count is not returned, assume no more data if fetched less than pageSize
-      hasMore.value = data.length === pageSize;
-    }
-    currentPage.value += 1;
-  } else {
-    heritageItems.value = heritageItems.value.concat([]);
-  }
-
-  isLoading.value = false;
+  searchHeritageItems();
 };
 
-// Infinite scroll handler
+// Function to search heritage items and preload descriptions
+const searchHeritageItems = async () => {
+  if (!hasMore.value || isLoading.value || searchPhrase.value.trim() === "")
+    return;
+
+  isLoading.value = true;
+  const startTime = performance.now();
+
+  try {
+    const { data, error, count } = await supabase
+      .from("heritage_items")
+      .select(
+        `
+        id,
+        name,
+        name_hanja,
+        era,
+        thumbnail:thumbnail (id, optimized_width, optimized_height),
+        categories1:category1_id (id, name),
+        categories2:category2_id (id, name),
+        categories3:category3_id (id, name),
+        categories4:category4_id (id, name)
+      `,
+        { count: "exact" }
+      )
+      .ilike("name", `%${searchPhrase.value}%`)
+      .order("id", { ascending: true })
+      .range(
+        (currentPage.value - 1) * pageSize,
+        currentPage.value * pageSize - 1
+      );
+
+    const endTime = performance.now();
+    totalSearches.value += 1;
+    totalSearchTime.value += endTime - startTime;
+
+    if (error) {
+      console.error("Search error:", error.message);
+      return;
+    }
+
+    if (data) {
+      // Fetch descriptions for all items in the current batch
+      const itemsWithDescriptions = await Promise.all(
+        data.map(async (item) => {
+          const description = await getHeritageItemDescription(item);
+          return { ...item, description };
+        })
+      );
+
+      heritageItems.value.push(itemsWithDescriptions); // Push the new batch with descriptions
+      totalCount.value = count !== null ? count : totalCount.value; // Update totalCount if available
+      hasMore.value =
+        count !== null
+          ? heritageItems.value.flat().length < count
+          : data.length === pageSize;
+      currentPage.value++;
+    }
+  } catch (err) {
+    console.error("Unexpected error:", err);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// Handle infinite scroll
 const handleScroll = () => {
-  const scrollPosition = window.innerHeight + window.scrollY;
-  const threshold = document.body.offsetHeight - 500; // Trigger 500px before bottom
-  if (scrollPosition >= threshold && !isLoading.value && hasMore.value) {
+  if (
+    window.innerHeight + window.scrollY >= document.body.offsetHeight - 500 &&
+    !isLoading.value &&
+    hasMore.value
+  ) {
     searchHeritageItems();
   }
 };
@@ -271,14 +217,13 @@ onUnmounted(() => {
   window.removeEventListener("scroll", handleScroll);
 });
 
-// Type definition for heritage items (adjust as needed)
 interface HeritageItem {
   id: number;
   name: string;
   name_hanja?: string;
   era: string;
   thumbnail?: {
-    optimized_url: string;
+    id: string;
     optimized_width: number;
     optimized_height: number;
   };
@@ -286,15 +231,16 @@ interface HeritageItem {
   categories2?: { id: number; name: string };
   categories3?: { id: number; name: string };
   categories4?: { id: number; name: string };
+  description?: string; // Added description field
 }
 </script>
 
 <style scoped>
-.relative-container {
-  position: relative;
-  width: 100%;
-  /* Adjust min-height and max-height as needed */
-  min-height: 200px;
-  max-height: 400px;
+/* Optional: Add some margin between batches */
+.columns-1,
+.columns-2,
+.columns-3,
+.columns-4 {
+  break-inside: avoid;
 }
 </style>
