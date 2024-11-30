@@ -5,11 +5,11 @@
   </div>
 
   <!-- Search Section -->
-  <div class="fixed bottom-0 w-full flex flex-col items-center mb-10 z-50 mx-2">
+  <div class="px-2 fixed bottom-0 w-full flex flex-col items-center mb-10 z-50">
     <div
-      class="flex h-14 shadow-lg shadow-gray-500/30 bg-gray-100 dark:bg-gray-900 bg-opacity-70 dark:bg-opacity-80 w-full max-w-lg py-2 px-4 rounded-full backdrop-blur-sm border border-gray-100/60 dark:border-gray-600/60 items-center"
+      class="flex h-12 shadow-lg shadow-gray-500/20 bg-gray-100 dark:bg-gray-900 bg-opacity-70 dark:bg-opacity-80 w-full max-w-lg py-2 px-4 rounded-full backdrop-blur-sm border border-gray-100/60 dark:border-gray-600/60 items-center"
     >
-      <NuxtLink to="/" class="w-8 h-8 hover:opacity-75">
+      <NuxtLink to="/" class="w-8 h-8 hover:opacity-75 flex-shrink-0">
         <NuxtImg
           src="/logo.webp"
           width="1024"
