@@ -62,10 +62,12 @@
 
     <!-- Skeletons for Loading State -->
     <div v-if="isLoading" class="w-full">
+      <UDivider v-if="heritageItems.length" class="my-6" label="불러오는 중" />
+
       <div
         class="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-3 px-4 sm:px-6 lg:px-8 max-w-[380px] sm:max-w-none mx-auto"
       >
-        <SkeletonCard v-for="n in 10" />
+        <SkeletonCard v-for="n in 20" :key="n" />
       </div>
     </div>
 
@@ -109,6 +111,18 @@ const totalPages = computed(() => {
   return 1;
 });
 
+// Debounce utility function
+function debounce<F extends (...args: any[]) => void>(
+  func: F,
+  wait: number
+): F {
+  let timeout: ReturnType<typeof setTimeout> | null;
+  return ((...args: any[]) => {
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  }) as F;
+}
+
 // Async function to fetch description
 const getHeritageItemDescription = async (item: HeritageItem) => {
   try {
@@ -130,22 +144,25 @@ const getHeritageItemDescription = async (item: HeritageItem) => {
   }
 };
 
-const SearchInputUpdate = (event: InputEvent) => {
-  searchPhrase.value = (event.target as HTMLInputElement).value;
-  search();
-};
-
 // Search function triggered by input
 const search = () => {
   heritageItems.value = []; // Reset heritageItems
   currentPage.value = 1;
   hasMore.value = true;
   totalCount.value = null; // Reset totalCount
-  if (searchPhrase.value === "") {
+  if (searchPhrase.value.trim() === "") {
     hasMore.value = false;
     return;
   }
   searchHeritageItems();
+};
+
+// Debounced version of the search function
+const debouncedSearch = debounce(search, 300); // 300ms debounce delay
+
+const SearchInputUpdate = (event: InputEvent) => {
+  searchPhrase.value = (event.target as HTMLInputElement).value;
+  debouncedSearch();
 };
 
 // Function to search heritage items and preload descriptions
@@ -189,7 +206,7 @@ const searchHeritageItems = async () => {
       return;
     }
 
-    if (data) {
+    if (data && data.length > 0) {
       // Fetch descriptions for all items in the current batch
       const itemsWithDescriptions = await Promise.all(
         data.map(async (item) => {
@@ -198,13 +215,20 @@ const searchHeritageItems = async () => {
         })
       );
 
-      heritageItems.value.push(itemsWithDescriptions); // Push the new batch with descriptions
+      // Only push non-empty batches
+      if (itemsWithDescriptions.length > 0) {
+        heritageItems.value.push(itemsWithDescriptions); // Push the new batch with descriptions
+      }
+
       totalCount.value = count !== null ? count : totalCount.value; // Update totalCount if available
       hasMore.value =
         count !== null
           ? heritageItems.value.flat().length < count
           : data.length === pageSize;
       currentPage.value++;
+    } else {
+      // No data returned; no more pages to load
+      hasMore.value = false;
     }
   } catch (err) {
     console.error("Unexpected error:", err);
