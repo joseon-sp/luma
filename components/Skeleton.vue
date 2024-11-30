@@ -28,7 +28,7 @@ const props = defineProps({
 
 const classes = computed(() =>
   [
-    "rounded-box bg-gray-50 dark:bg-gray-900 skeleton",
+    "rounded-box bg-gray-100 dark:bg-gray-900 skeleton",
     props.rounded,
     props.width === "full" ? "w-full" : `w-${props.width}`,
     props.height ? `h-${props.height}` : "",

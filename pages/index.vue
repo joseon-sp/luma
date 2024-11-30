@@ -1,25 +1,39 @@
 <template>
-  <!-- Top Bar with Color Mode and Stats -->
-  <div class="fixed top-0 left-0 p-2 text-sm z-50">
+  <!-- Top right for settings -->
+  <div class="fixed top-0 right-0 p-2 text-sm z-50">
     <UColorModeButton />
-    <p>
-      <strong>평균 검색 시간:</strong> {{ averageSearchTime }} ms<br />
-      <strong>총 검색 요청 수:</strong> {{ totalSearches }}
-    </p>
   </div>
 
   <!-- Search Section -->
-  <div
-    class="sticky top-0 flex flex-col items-center mt-[30vh] mb-10 pb-2 bg-background z-50"
-  >
-    <h2 class="h2">Luma Search demo</h2>
-    <UInput
-      @input="search"
-      type="text"
-      placeholder="검색하기"
-      class="max-w-2xl"
-    />
+  <div class="fixed bottom-0 w-full flex flex-col items-center mb-10 z-50 mx-2">
+    <div
+      class="flex h-14 shadow-lg shadow-gray-500/30 bg-gray-100 dark:bg-gray-900 bg-opacity-70 dark:bg-opacity-80 w-full max-w-lg py-2 px-4 rounded-full backdrop-blur-sm border border-gray-100/60 dark:border-gray-600/60 items-center"
+    >
+      <NuxtLink to="/" class="w-8 h-8 hover:opacity-75">
+        <NuxtImg
+          src="/logo.webp"
+          width="1024"
+          height="1024"
+          alt="조선스페이스 로고"
+        />
+      </NuxtLink>
+
+      <UInput
+        v-model="searchPhrase"
+        @input="SearchInputUpdate"
+        type="text"
+        placeholder="검색하기"
+        variant="none"
+        size="lg"
+        class="w-full"
+      />
+    </div>
   </div>
+
+  <ULandingHero
+    title="루마 데모"
+    description="이 웹 애플리케이션은 활발히 개발되고 있습니다. 최종 품질이나 제품을 나타내지 않습니다."
+  />
 
   <!-- Heritage Items or Skeletons -->
   <div class="flex flex-col items-center w-full">
@@ -56,13 +70,19 @@
     </div>
 
     <!-- End of Page Message -->
-    <div v-if="!hasMore && heritageItems.length" class="text-center my-4">
-      <p>You've reached the end of the results.</p>
+    <div
+      v-if="!hasMore && heritageItems.length"
+      class="text-center my-4 mt-8 mb-48"
+    >
+      <p>결과의 끝에 다다랐습니다.</p>
     </div>
 
     <!-- No Results Found Message -->
-    <p v-else-if="!isLoading && !heritageItems.length" class="text-center">
-      No results found
+    <p
+      v-else-if="!isLoading && !heritageItems.length && searchPhrase !== ''"
+      class="text-center"
+    >
+      검색 결과가 없습니다.
     </p>
   </div>
 </template>
@@ -89,12 +109,6 @@ const totalPages = computed(() => {
   return 1;
 });
 
-const averageSearchTime = computed(() => {
-  return totalSearches.value === 0
-    ? "0.00"
-    : (totalSearchTime.value / totalSearches.value / 10).toFixed(2);
-});
-
 // Async function to fetch description
 const getHeritageItemDescription = async (item: HeritageItem) => {
   try {
@@ -116,12 +130,13 @@ const getHeritageItemDescription = async (item: HeritageItem) => {
   }
 };
 
+const SearchInputUpdate = (event: InputEvent) => {
+  searchPhrase.value = (event.target as HTMLInputElement).value;
+  search();
+};
+
 // Search function triggered by input
-const search = (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  const value = target?.value || ""; // Safely access the input value
-  if (searchPhrase.value === value.trim()) return; // Prevent unnecessary searches
-  searchPhrase.value = value.trim();
+const search = () => {
   heritageItems.value = []; // Reset heritageItems
   currentPage.value = 1;
   hasMore.value = true;
